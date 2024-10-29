@@ -1,15 +1,10 @@
 package org.stock.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.ManyToOne;
-import org.stock.Entities.Category;
 import org.stock.Entities.PieceState;
-import org.wildfly.common.annotation.NotNull;
+import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Piecedto {
@@ -19,7 +14,7 @@ public class Piecedto {
 
     private Long id;
     @NotNull
-    private String NamePiece;
+    private String namePiece;
 
     @NotNull
     private String description;
@@ -36,6 +31,11 @@ public class Piecedto {
     @NotNull
     private String supplier;
 
+    private String antecedentId; // Ajouté pour stocker l'identifiant d'antécédent
+
+    public Piecedto(String namePiece) {
+        this.namePiece = namePiece;
+    }
 
     public Long getCategoryId() {
         return categoryId;
@@ -65,13 +65,12 @@ public class Piecedto {
         this.id = id;
     }
     public String getNamePiece() {
-        return NamePiece;
+        return namePiece;
     }
 
     public void setNamePiece(String namePiece) {
-        NamePiece = namePiece;
+        this.namePiece = namePiece;
     }
-
     public String getDescription() {
         return description;
     }
@@ -119,4 +118,26 @@ public class Piecedto {
     public void setSupplier(String supplier) {
         this.supplier = supplier;
     }
+
+    public String getAntecedentId() {
+        return antecedentId;
+    }
+
+    public void setAntecedentId(String antecedentId) {
+        this.antecedentId = antecedentId;
+    }
+
+    public Piecedto(String namePiece, String description, PieceState pieceState, Integer quantity, LocalDateTime dateAdded, Integer price, String supplier, String antecedentId, Long categoryId, String categoryName) {
+        this.namePiece = namePiece;
+        this.description = description;
+        this.pieceState = pieceState;
+        this.quantity = quantity;
+        this.dateAdded = dateAdded;
+        this.price = price;
+        this.supplier = supplier;
+        this.antecedentId = antecedentId;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+    }
+
 }

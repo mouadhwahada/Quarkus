@@ -1,51 +1,53 @@
 package org.stock.Entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.stock.dto.Piecedto;
-import org.wildfly.common.annotation.NotNull;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
-@Table(name = "piece")
-public class Piece {
+@Table(name = "Piece")
+@JsonIgnoreProperties({"interventionHistories"})
 
+public class Piece {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long category_id;
-    private String NamePiece;
+
+    private String namePiece;
     private String description;
+
     @Enumerated(EnumType.STRING)
-    public PieceState pieceState;
+    private PieceState pieceState;
+
     private Integer quantity;
     private LocalDateTime dateAdded;
     private Integer price;
-    private String supplier ;
+    private String supplier;
+
+    @OneToMany(mappedBy = "piece")
+    @JsonManagedReference
+    private Set<InterventionHistory> interventionHistories;
+
+    @OneToMany(mappedBy = "piece", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<PieceSale> pieceSales;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "category_id" , insertable = false, updatable = false)
+    @JoinColumn(name = "category_id")
     private Category categ;
 
-    public Long getCategory_id() {
-        return category_id;
-    }
-
-    public void setCategory_id(Long category_id) {
-        this.category_id = category_id;
-    }
+   // private String antecedentId;
 
     public Piece() {
 
     }
+
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -56,11 +58,11 @@ public class Piece {
     }
 
     public String getNamePiece() {
-        return NamePiece;
+        return namePiece;
     }
 
     public void setNamePiece(String namePiece) {
-        NamePiece = namePiece;
+        this.namePiece = namePiece;
     }
 
     public String getDescription() {
@@ -119,8 +121,32 @@ public class Piece {
         this.categ = categ;
     }
 
-    public Piece(String namePiece, String description, PieceState pieceState, Integer quantity, LocalDateTime dateAdded, Integer price, String supplier, Category categ) {
-        NamePiece = namePiece;
+    public Set<InterventionHistory> getInterventionHistories() {
+        return interventionHistories;
+    }
+
+    public void setInterventionHistories(Set<InterventionHistory> interventionHistories) {
+        this.interventionHistories = interventionHistories;
+    }
+
+    public Set<PieceSale> getPieceSales() {
+        return pieceSales;
+    }
+
+    public void setPieceSales(Set<PieceSale> pieceSales) {
+        this.pieceSales = pieceSales;
+    }
+
+  /*  public String getAntecedentId() {
+        return antecedentId;
+    }
+
+    public void setAntecedentId(String antecedentId) {
+        this.antecedentId = antecedentId;
+    }*/
+
+    public Piece(String namePiece, String description, PieceState pieceState, Integer quantity, LocalDateTime dateAdded, Integer price, String supplier, Category categ, String antecedentId) {
+        this.namePiece = namePiece;
         this.description = description;
         this.pieceState = pieceState;
         this.quantity = quantity;
@@ -128,20 +154,26 @@ public class Piece {
         this.price = price;
         this.supplier = supplier;
         this.categ = categ;
+     //   this.antecedentId = antecedentId;
     }
 
-    public Piecedto getPieceDto(){
-        Piecedto piecedto = new Piecedto();
-        piecedto.setId(id);
-        piecedto.setNamePiece(NamePiece);
-        piecedto.setPrice(price);
-        piecedto.setDescription(description);
-        piecedto.setPieceState(pieceState);
-        piecedto.setQuantity(quantity);
-        piecedto.setSupplier(supplier);
-        piecedto.setCategoryName(categ.getName());
-        piecedto.setCategoryId(categ.getId());
-        return piecedto;
+    public Piecedto getPieceDto() {
+        Piecedto piecedto = new Piecedto(namePiece);
+        piecedto.setId(this.id);
+        piecedto.setNamePiece(this.namePiece);
+        piecedto.setDescription(this.description);
+        piecedto.setPieceState(this.pieceState);
+        piecedto.setQuantity(this.quantity);
+        piecedto.setDateAdded(this.dateAdded);
+        piecedto.setPrice(this.price);
+        piecedto.setSupplier(this.supplier);
+   //     piecedto.setAntecedentId(this.antecedentId);
 
+        if (this.categ != null) {
+            piecedto.setCategoryId(this.getCateg().getId());
+            piecedto.setCategoryName(this.getCateg().getName());
+        }
+
+        return piecedto;
     }
 }

@@ -1,6 +1,7 @@
 package org.stock.Controller;
 
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -10,7 +11,6 @@ import org.stock.Services.PieceService;
 import org.stock.dto.Piecedto;
 import org.stock.repository.PieceRepository;
 
-import java.io.IOException;
 import java.util.List;
 
 @Consumes(MediaType.APPLICATION_JSON)
@@ -24,13 +24,110 @@ public class PieceController {
     @Inject
     PieceRepository pieceRepository;
 
-   /* @GET
-    public Response listPieces() {
-        List<Piece> pieces = pieceService.listPieces();
-        return Response.ok(pieces).build();
-    }*/
+
+
+
+
+
+    @POST
+    @Path("/post")
+    public Response postPiece(Piecedto piecedto) {
+        try {
+            pieceService.postPiece(piecedto);
+            return Response.status(Response.Status.CREATED).build();
+        } catch (IllegalAccessException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Category not found: " + e.getMessage()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid input: " + e.getMessage()).build();
+        }
+    }
+
+    @PUT
+    @Path("/{pieceId}")
+    public Response updatePiece(@PathParam("pieceId") Long pieceId, Piecedto piecedto) {
+        try {
+            pieceService.updatePiece(String.valueOf(pieceId), piecedto); // Mise à jour basée sur l'ID de la pièce
+            return Response.ok().build();
+        } catch (IllegalAccessException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Piece not found: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("An error occurred: " + e.getMessage()).build();
+        }
+    }
+
+    @PUT
+    @Path("/{pieceName}")
+    public Response updatePiece(@PathParam("pieceName") String pieceName, Piecedto piecedto) {
+        try {
+            pieceService.updatePiece(pieceName, piecedto);  // Utilisation de pieceName au lieu de id
+            return Response.ok().build();
+        } catch (IllegalAccessException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Piece or Category not found: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("An error occurred: " + e.getMessage()).build();
+        }
+    }
+
 
     @GET
+    @Path("/by-piece-id/{pieceId}")
+    public Response getLogsByPieceId(@PathParam("pieceId") Long pieceId) {
+        List<PieceChangeLog> logs = pieceService.getLogsByPieceId(pieceId);
+        if (logs.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity("No logs found for piece ID: " + pieceId).build();
+        }
+        return Response.ok(logs).build();
+    }
+
+    // Endpoint pour obtenir les logs par nom de pièce
+    @GET
+    @Path("/by-piece-name/{pieceName}")
+    public Response getLogsByPieceName(@PathParam("pieceName") String pieceName) {
+        try {
+            List<PieceChangeLog> logs = pieceService.getLogsByPieceName(pieceName);
+            if (logs.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND).entity("No logs found for piece name: " + pieceName).build();
+            }
+            return Response.ok(logs).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
+
+    @GET
+    @Path("/all")
+    public Response getAllPieces() {
+        List<Piecedto> pieces = pieceService.getAllPieces();
+        return Response.ok(pieces).build();
+    }
+    @GET
+    @Path("/search/{namePiece}")
+    public Response searchPieceByNamePiece(@PathParam("namePiece") String namePiece) {
+        List<Piecedto> pieces = pieceService.searchPieceByNamePiece(namePiece);
+        return Response.ok(pieces).build();
+    }
+
+
+    @Path("/SOLD")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSoldPieces() {
+        try {
+            List<Piece> soldPieces = pieceService.getSoldPieces();
+            return Response.ok(soldPieces).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+
+    // @GET
     @Path("{id}")
     public Response getPiece(@PathParam("id") Long id) {
         Piece piece = pieceRepository.findById(id) ;
@@ -40,7 +137,35 @@ public class PieceController {
         return Response.ok(piece).build();
     }
 
-   // @POST
+
+
+
+   /* @GET
+    @Path("/{id}/log")
+    public Response getChangeLog(@PathParam("id") Long pieceId) {
+        List<PieceChangeLog> changeLogs = pieceService.getChangeLog(pieceId);
+        if (changeLogs.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("No change logs found for piece ID: " + pieceId).build();
+        }
+        return Response.ok(changeLogs).build();
+    }*/
+
+
+/*
+    @POST
+    @Path("/sell")
+    @Transactional
+    public Response sellPiece(@QueryParam("pieceId") Long pieceId, @QueryParam("clientCin") String clientCin) {
+        try {
+            pieceService.sellPiece(pieceId, clientCin);
+            return Response.status(Response.Status.OK).build();
+        } catch (IllegalAccessException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }*/
+
+    /*@POST
     @Path("/log")
     public Response logChange(@QueryParam("pieceId") Long pieceId,
                               @QueryParam("changeType") String changeType,
@@ -52,22 +177,21 @@ public class PieceController {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
-    }
+    }*/
 
-    /*
-    @POST
+   /* @POST
     @Path("/add")
     public Response savePiece(Piecedto piecedto, @QueryParam("categoryId") Long categoryId) {
         try {
             Piece piece = pieceService.savePiece(piecedto, categoryId);
-            return Response.ok(piece).status(Response.Status.CREATED).build();
+            return Response.status(Response.Status.CREATED).entity(piece).build();
         } catch (IllegalAccessException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }*/
 
-    @PUT
-    @Path("{id}")
+ /*   @PUT
+   @Path("/{id}")
     public Response updatePiece(@PathParam("id") Long id, Piecedto piecedto) {
         try {
             pieceService.updatePiece(id, piecedto);
@@ -77,10 +201,10 @@ public class PieceController {
         } catch (NullPointerException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-    }
+    }*/
 
-   // @DELETE
-    @Path("{id}")
+  /*  @DELETE
+    @Path("/{id}")
     public Response removePiece(@PathParam("id") Long id) {
         try {
             pieceService.removePiece(id);
@@ -88,53 +212,22 @@ public class PieceController {
         } catch (NullPointerException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-    }
+    }*/
 
-    @POST
 
-    //@Path("/post/{categoryId}")
-    @Path("/post")
-    public Response postPiece(Piecedto piecedto) {
+  /*  @PUT
+    @Path("/{id}")
+    public Response updatePiece(@PathParam("id") Long id, Piecedto piecedto) {
         try {
-            Piece postedPiece = pieceService.postPiece(piecedto);
-            return Response.status(Response.Status.CREATED).entity(postedPiece).build();
+            pieceService.updatePiece(id, piecedto);
+            return Response.ok().build();
         } catch (IllegalAccessException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Piece or Category not found: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("An error occurred: " + e.getMessage()).build();
         }
-    }
+    }*/
 
-    @GET
-    @Path("/pieces")
-    public Response getAllPieces() {
-        List<Piece> piecedtoList = pieceService.getAllPieces();
-        return Response.ok(piecedtoList).build();
-    }
-
-    @GET
-    @Path("{id}/log")
-    public Response getChangeLog(@PathParam("id") Long pieceId) {
-        List<PieceChangeLog> logs = pieceService.getChangeLog(pieceId);
-        if (logs.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity("No change logs found for this piece.").build();
-        }
-        return Response.ok(logs).build();
-    }
-    @GET
-    @Path("/search/{NamePiece}")
-    public Response searchPieceByNamePiece(@PathParam("NamePiece") String NamePiece) {
-        List<Piecedto> pieces = pieceService.searchPieceByNamePiece(NamePiece);
-        return Response.ok(pieces).build();
-    }
 }
-
-   /* @POST
-    @Path("/{categoryId}")
-    public Response postPiece(@PathParam("categoryId") Long categoryId, Piecedto piecedto) {
-        try {
-            Piece postedPiece = pieceService.postPiece(categoryId, piecedto);
-            return Response.status(Response.Status.CREATED).entity(postedPiece).build();
-        } catch (IllegalAccessException | IOException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
-}*/

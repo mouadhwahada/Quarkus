@@ -2,6 +2,9 @@ package org.stock.Entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +16,10 @@ public class CategoryChangeLog extends PanacheEntity {
     private String newValue;
     private LocalDateTime changeDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", insertable = false, updatable = false)
+    private Category category;
+
     public CategoryChangeLog() {
 
     }
@@ -22,9 +29,8 @@ public class CategoryChangeLog extends PanacheEntity {
     }
 
     public void setCategoryId(Long categoryId) {
-        categoryId = categoryId;
+        this.categoryId = categoryId;
     }
-
     public String getChangeType() {
         return changeType;
     }

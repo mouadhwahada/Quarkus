@@ -83,6 +83,6 @@ public class CategoryService {
     }
     @Transactional
     public List<CategoryChangeLog> getChangeLog(Long categoryId) {
-        return CategoryChangeLog.list("category_id", categoryId);
+        return CategoryChangeLog.list("categoryId", categoryId);
     }
 }
